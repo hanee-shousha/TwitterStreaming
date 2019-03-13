@@ -45,7 +45,7 @@ def process_rdd(time, rdd):
         # Get spark sql singleton context from the current context
         sql_context = get_sql_context_instance(rdd.context)
         # convert the RDD to Row RDD
-        row_rdd = rdd.map(lambda w: Row(hashtag=w[0], hashtag_count=w[1]))
+        row_rdd = rdd.map(lambda w: Row(hashtag=w[0].encode("utf-8"), hashtag_count=w[1]))
         # create a DF from the Row RDD
         hashtags_df = sql_context.createDataFrame(row_rdd)
         # Register the dataframe as table
@@ -62,8 +62,8 @@ def process_rdd(time, rdd):
 # split each tweet into words
 words = dataStream.flatMap(lambda line: line.split(" "))
 # filter the words to get only hashtags, then map each hashtag to be a pair of (hashtag,1)
-#hashtags = words.filter(lambda w: '#' in w).map(lambda x: (x, 1))
-hashtags = words.map(lambda x: (x, 1))
+#hashtags = words.map(lambda x: (x, 1))
+hashtags = words.filter(lambda w: '#' in w).map(lambda x: (x, 1))
 # adding the count of each hashtag to its last count
 tags_totals = hashtags.updateStateByKey(aggregate_tags_count)
 # do processing for each RDD generated in each interval
